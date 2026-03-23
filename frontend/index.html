@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Alerts Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-bell"></i> Trading Alerts Dashboard</h1>
+                <p class="subtitle">Real-time price alerts from TradingView via n8n</p>
+            </div>
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Total Alerts</div>
+                    <div class="stat-value" id="totalAlerts">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Symbols</div>
+                    <div class="stat-value" id="activeSymbols">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Update</div>
+                    <div class="stat-value" id="lastUpdate">--:--</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-cog"></i> Controls</h3>
+                    <div class="control-group">
+                        <button id="refreshBtn" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Refresh Alerts
+                        </button>
+                        <button id="clearBtn" class="btn btn-secondary">
+                            <i class="fas fa-trash"></i> Clear Old Alerts
+                        </button>
+                        <button id="toggleWsBtn" class="btn btn-success">
+                            <i class="fas fa-wifi"></i> Enable Real-time
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-filter"></i> Filter by Symbol</h3>
+                    <div class="symbol-filter">
+                        <input type="text" id="symbolFilter" placeholder="e.g., AAPL, TSLA" autocomplete="off">
+                        <button id="applyFilterBtn" class="btn btn-small">Apply</button>
+                        <button id="clearFilterBtn" class="btn btn-small btn-secondary">Clear</button>
+                    </div>
+                    <div class="symbol-list" id="symbolList">
+                        <div class="loading">Loading symbols...</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3><i class="fas fa-info-circle"></i> System Status</h3>
+                    <div class="status-indicator">
+                        <div class="status-item">
+                            <span class="status-label">API Connection:</span>
+                            <span class="status-value status-healthy" id="apiStatus">Healthy</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Real-time Updates:</span>
+                            <span class="status-value status-disconnected" id="wsStatus">Disabled</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Last Alert:</span>
+                            <span class="status-value" id="lastAlertTime">No alerts yet</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                <div class="content-header">
+                    <h2><i class="fas fa-history"></i> Recent Alerts</h2>
+                    <div class="pagination-controls">
+                        <button id="prevPageBtn" class="btn btn-small" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <span class="page-info">Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+                        <button id="nextPageBtn" class="btn btn-small" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alerts-table-container">
+                    <table class="alerts-table" id="alertsTable">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Symbol</th>
+                                <th>Price</th>
+                                <th>Condition</th>
+                                <th>Message</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alertsTableBody">
+                            <tr class="loading-row">
+                                <td colspan="6">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading alerts...
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="emptyState" style="display: none;">
+                    <div class="empty-icon">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h3>No Alerts Yet</h3>
+                    <p>Waiting for TradingView alerts to arrive via n8n webhook.</p>
+                    <p>Configure your n8n workflow to send POST requests to:</p>
+                    <code class="webhook-url">http://your-server:3000/api/webhook</code>
+                </div>
+            </main>
+        </div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>Trading Alerts Dashboard v1.0.0 • Built with simplicity in mind</p>
+                </div>
+                <div class="footer-right">
+                    <p>Backend: <span id="backendUrl">http://localhost:3000</span> • 
+                    <span id="connectionStatus">Connected</span></p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Alert Detail Modal -->
+    <div class="modal" id="alertDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> Alert Details</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="detail-loading">Loading alert details...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Alert Notification -->
+    <div class="notification" id="newAlertNotification">
+        <div class="notification-content">
+            <div class="notification-icon">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="notification-text">
+                <strong>New Alert Received!</strong>
+                <span id="notificationMessage">AAPL crossed $150</span>
+            </div>
+            <button class="notification-close" id="closeNotificationBtn">&times;</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
