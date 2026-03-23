@@ -11,7 +11,7 @@ services:
       - DATABASE_PATH=/app/data/alerts.db
       - LOG_LEVEL=info
     volumes:
-      - backend_data:/app/data
+      - datos_alertas_db:/app/data   # <-- ¡Nombre cambiado aquí!
     logging:
       driver: "json-file"
       options:
@@ -32,4 +32,4 @@ services:
         max-file: "3"
 
 volumes:
-  backend_data:
+  datos_alertas_db:   # <-- ¡Nombre cambiado aquí al final!
