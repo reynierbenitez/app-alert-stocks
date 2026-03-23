@@ -12,7 +12,7 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chmod -R 755 /usr/share/nginx/html
 
 # Create non-root user
-USER nginx
+# USER nginx
 
 # Expose port
 EXPOSE 8080
